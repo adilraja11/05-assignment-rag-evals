@@ -4,6 +4,7 @@ import {
 	type CompletionModel,
 	type MemoryStore,
 } from "@anvia/core";
+import type { AgentObserver } from "@anvia/core/observability";
 import { lens } from "@anvia/lens";
 import { createLoggerObserver, createPinoLogger } from "@anvia/logger";
 import { BASE_INSTRUCTIONS } from "./prompts/base-instructions.js";
@@ -43,19 +44,31 @@ interface CreateAgentOptions {
 	additionalTools?: AnyTool[];
 	additionalInstructions?: string[];
 	memory?: MemoryStore;
+	observers?: AgentObserver[];
+	productionTracing?: boolean;
+	includeWebTools?: boolean;
 }
 
 export function createAgent(opts: CreateAgentOptions) {
 	const agent = new AgentBuilder(opts.agentId, opts.model ?? defaultModel)
 		.instructions(BASE_INSTRUCTIONS)
 		.tools([
-			...createWebTools(),
+			...(opts.includeWebTools ? createWebTools() : []),
 			handbookSearch,
 			...(opts.additionalTools ?? []),
 		])
-		.defaultMaxTurns(50)
-		.observe(logging)
-		.observe(tracing);
+		.temperature(0)
+		.maxTokens(180)
+		.defaultMaxTurns(4)
+		.observe(logging);
+
+	if (opts.productionTracing !== false) {
+		agent.observe(tracing);
+	}
+
+	for (const observer of opts.observers ?? []) {
+		agent.observe(observer);
+	}
 
 	for (const instruction of opts.additionalInstructions ?? []) {
 		agent.instructions(instruction);

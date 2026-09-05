@@ -20,12 +20,16 @@ pnpm eval
 
 | Metric | Cases |
 | --- | ---: |
-| Relevancy | 6 |
-| Faithfulness | 6 |
-| gEval | 6 |
-| `contains()` | 6 |
-| `exactMatch()` | 6 |
+| Grounded `gEval` | 23 |
+| `abstention()` | 2 |
+| `exactMatch()` | 5 |
 
-Every case in `cases.ts` has a category and a primary metric. The runner filters
-the same dataset into five eval suites. Every suite sends its results through
-the Anvia Lens reporter.
+The primary runner selects each case by its declared metric, producing 23
+grounded checks, five exact-output checks, and two abstention checks (30 unique
+primary cases). The tool-invocation check is an additional secondary contract
+over the three tool-call cases.
+
+Each case has a category and a contract-appropriate primary metric. Grounded
+G-Eval receives the `sourceText` values returned by `handbookSearch` in that
+same run. Abstention cases are also checked independently of exact formatting.
+Every suite sends its results through the Anvia Lens reporter.
